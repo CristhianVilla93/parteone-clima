@@ -1,95 +1,109 @@
-import Image from 'next/image'
-import styles from './page.module.css'
+'use client'
 
-export default function Home() {
+import React, { useState } from 'react';
+
+const Clima = () => {
+  const [city, setCity] = useState('');
+  const [currentWeather, setCurrentWeather] = useState(null);
+  const [forecast, setForecast] = useState(null);
+  const [error, setError] = useState(null);
+
+  const handleInputChange = (event) => {
+    setCity(event.target.value);
+  };
+
+  const fetchData = async () => {
+    try {
+      const currentWeatherResponse = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=8087ec1c35c0186373f21276aa07faa0&units=metric`
+      );
+      if (!currentWeatherResponse.ok) {
+        throw new Error('Current weather not found');
+      }
+      const currentWeatherData = await currentWeatherResponse.json();
+      setCurrentWeather(currentWeatherData);
+      setError(null);
+
+      const forecastResponse = await fetch(
+        `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=8087ec1c35c0186373f21276aa07faa0&units=metric`
+      );
+      if (!forecastResponse.ok) {
+        throw new Error('Forecast not found');
+      }
+      const forecastData = await forecastResponse.json();
+      const forecastAt9AM = forecastData.list.filter(
+        (item) => item.dt_txt.endsWith('09:00:00')
+      );
+      setForecast(forecastAt9AM);
+      setError(null);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      setCurrentWeather(null);
+      setForecast(null);
+      setError(error.message);
+    }
+  };
+
+  const getWeatherIconUrl = (iconCode) =>
+    `http://openweathermap.org/img/wn/${iconCode}.png`;
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.js</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
+    <div className="principal">
+      <div className="secund1">
+        <input type="text" value={city} onChange={handleInputChange} />
+        <button onClick={fetchData}>Search</button>
+        {error && <p>{error}</p>}
+        {currentWeather && (
+          <div>
+            
+            <p>Temperatura: {currentWeather.main.temp} °C</p>
+            {currentWeather.weather.map((weather) => (
+              <div key={weather.id}>
+                <img
+                  src={getWeatherIconUrl(weather.icon)}
+                  alt={weather.description}
+                />
+                <p>{weather.description}</p>
+              </div>
+
+            ))}
+          </div>
+        )}
       </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
+      <div className="secund2">
+        {forecast && (
+          <>
+            {forecast.map((item) => (
+              <div key={item.dt} className="cuadromayor">
+                <div className="cuadroDias">
+                  <div className='dias'>
+                    <p>Dia {item.dt_txt.substring(8, 10)} Jul</p>
+                    {item.weather.map((weather) => (
+                      <div key={weather.id}>
+                        <img
+                          src={getWeatherIconUrl(weather.icon)}
+                          alt={weather.description}
+                        />
+                      </div>
+                    ))}
+                    <p>Temperature: {item.main.temp} °C</p>
+                  </div>
+                </div>
+                <div className="cuadroDatos">
+                  <div className="datos">
+                    <p>velocidad: {item.wind.speed}</p>
+                    <p>humedad: {item.main.humidity}</p>
+                    <p>visibility: {item.main.visibility}</p>
+                    <p>Aire: {item.main.pressure}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </>
+        )}
       </div>
+    </div>
+  );
+};
 
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore the Next.js 13 playground.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
-}
+export default Clima;
